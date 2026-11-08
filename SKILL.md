@@ -1,6 +1,6 @@
 ---
 name: relato-urbano-short
-description: Monta Shorts promocionales verticales (1080x1920) de un reportaje largo de Relato Urbano con su propio material (clips, fotos, documentos y piezas animadas de Remotion), con voz de Fish Audio, para que la gente no deslice, aguante hasta el final, comente, dé like y vaya al reportaje. Prepara tres ángulos distintos (tráiler, dilema y dato) de la duración que pida Antonio, los pasa por sus puertas y por un juez a ciegas, y deja un informe de una página para que él elija cuáles publicar y cuándo. Úsala siempre que Antonio pida "shorts de L07", "promociona el reportaje de X", "un short de 30 segundos del gusano", "saca shorts del vídeo largo" o similar, aunque no nombre la skill. No es para Shorts sueltos sin reportaje detrás ni para Ovillo Rojo.
+description: Monta Shorts promocionales verticales (1080x1920) de un reportaje largo de Relato Urbano con su propio material (clips, fotos, documentos y piezas animadas de Remotion), con voz de Fish Audio, para que la gente no deslice, aguante hasta el final, comente, dé like y vaya al reportaje. Prepara tres ángulos distintos (tráiler, quiz para comentar y dato) de la duración que pida Antonio, los pasa por sus puertas y por un juez a ciegas, y deja un informe de una página para que él elija cuáles publicar y cuándo. Úsala siempre que Antonio pida "shorts de L07", "promociona el reportaje de X", "un short de 30 segundos del gusano", "saca shorts del vídeo largo" o similar, aunque no nombre la skill. No es para Shorts sueltos sin reportaje detrás ni para Ovillo Rojo.
 ---
 
 # Relato Urbano: Shorts promocionales de un reportaje
@@ -11,7 +11,7 @@ Antonio dice de qué reportaje y de qué duración; tú haces el resto y te para
 
 Lo pidió Antonio (8-11-2026): **impacto**, que **no deslicen y aguanten hasta el final**, que **comenten y den like**, y que **lleven al reportaje largo**, porque así los posiciona YouTube. Las reglas concretas están en `references/retencion.md`: léelas antes de escribir nada.
 
-Por defecto, **tres Shorts por reportaje, cada uno con un ángulo** (tráiler, dilema y dato), todos de la duración que diga Antonio (o la que diga para cada uno). Con voz de Fish (Gabriel VO, modelo de pago para publicar).
+Por defecto, **tres Shorts por reportaje, cada uno con un ángulo**: tráiler, **quiz** y dato. El quiz (Antonio, 8-11-2026) es un quick quiz para que la gente comente: pregunta, tres opciones, cuenta atrás y «Comenta A, B o C»; **la respuesta no se da: está en el reportaje publicado en el canal**. El dilema queda como alternativa al quiz. Todos todos de la duración que diga Antonio (o la que diga para cada uno). Con voz de Fish (Gabriel VO, modelo de pago para publicar).
 
 ## El proceso
 

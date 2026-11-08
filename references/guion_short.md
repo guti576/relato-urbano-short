@@ -26,9 +26,30 @@ Uno por Short, en `<reportaje>/shorts/S1/guion.json` (S2, S3…). Lo escribe Cla
 }
 ```
 
+### El quiz
+
+Un Short con `"angulo": "quiz"` lleva además el bloque `quiz`. La última frase de `beats` es la que lee las opciones: mientras suena, las opciones van apareciendo en pantalla. Después vienen los 3 s de cuenta atrás, y al final la tarjeta con la pregunta para comentar.
+
+```json
+  "quiz": {
+    "pregunta": "¿QUÉ HIZO LA *NASA*?",
+    "opciones": ["Pidió las fotos al ejército", "Canceló la petición", "Reparó el ala en órbita"],
+    "correcta": 1,
+    "cuenta": 3
+  },
+  "pregunta": "COMENTA: *A*, *B* O *C*",
+  "pregunta_voz": "¿Cuál dices tú? Te leo abajo.",
+  "cta": "La respuesta, en el reportaje del canal",
+  "comentario_fijado": "¿A, B o C? La respuesta, en el reportaje del canal 👇"
+```
+
+- `correcta`: índice de la opción buena (0, 1 o 2). **Solo lo usa el control** para comprobar que la respuesta no se escapa: nunca sale en pantalla.
+- `cuenta`: segundos de cuenta atrás, con un tic por segundo (3 por defecto).
+- El último beat no lleva `rot`: en pantalla mandan las opciones.
+
 ## Campos
 
-- **angulo:** tráiler, dilema o dato (`retencion.md`). **dur:** la duración que pidió Antonio, en segundos.
+- **angulo:** tráiler, quiz, dilema o dato (`retencion.md`). **dur:** la duración que pidió Antonio, en segundos.
 - **beats:** una frase de voz cada uno, con su rótulo (`|` = salto de línea, `*palabra*` = ámbar) y sus planos. Un beat sin voz lleva `"dur"`.
 - **planos:** se reparten la duración del beat a partes iguales, salvo los que llevan `"dur"`. Un beat sin planos alarga el plano anterior.
   - `{"de": n}`: el plano n del reportaje (columna «n» del inventario): copia el clip, la foto o la pieza.

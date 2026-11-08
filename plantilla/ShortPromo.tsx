@@ -21,7 +21,8 @@ type Plano = {tipo: "V" | "F" | "D" | "A"; ini: number; dur: number; clip?: stri
 type Texto = {ini: number; dur: number; rot: string; arriba?: boolean; ya?: boolean};
 type Datos = {dur: number; planos: Plano[]; textos: Texto[]; voz: {src: string; ini: number; dur: number}[];
   musica?: {src: string; desde?: number; vol?: number}; sfx?: {t: number; src: string; vol?: number; dur?: number}[];
-  final?: {ini: number; pregunta: string; cta: string; like?: string}};
+  final?: {ini: number; pregunta: string; cta: string; like?: string};
+  quiz?: {ini: number; cuenta: number; fin: number; pregunta: string; opciones: string[]}};
 
 const zoomDe = (p: Plano, f: number, n: number) => {
   const [a, b] = p.zoom ?? [1.04, 1.12];
@@ -96,6 +97,40 @@ const Rotulo: React.FC<{t: Texto}> = ({t}) => {
   );
 };
 
+// Quiz (ángulo «quiz», references/retencion.md): pregunta arriba, opciones que entran mientras la voz las lee y cuenta
+// atrás de unos segundos. La respuesta no se da nunca: está en el reportaje.
+const Quiz: React.FC<{q: NonNullable<Datos["quiz"]>}> = ({q}) => {
+  const f = useCurrentFrame();
+  const lectura = Math.max(1, fr(q.cuenta - q.ini));
+  const a = interpolate(f, [0, 6], [0, 1], clamp);
+  const enCuenta = f >= lectura;
+  const n = Math.ceil((fr(q.fin - q.ini) - f) / FPS);
+  const dentro = enCuenta ? ((f - lectura) % FPS) / FPS : 0;
+  const LETRAS = ["A", "B", "C", "D"];
+  return (
+    <AbsoluteFill>
+      <AbsoluteFill style={{background: "linear-gradient(180deg, rgba(0,0,0,.72) 0%, rgba(0,0,0,.45) 45%, rgba(0,0,0,.72) 100%)", opacity: a}} />
+      <div style={{position: "absolute", left: SEGURA.izq, right: SEGURA.der, top: SEGURA.arriba + 20, height: 230, display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center",
+        opacity: a, fontFamily: IMPACTO, fontSize: 92, lineHeight: 1.08, color: "#fff", textShadow: "0 6px 22px #000"}}>
+        <div>{q.pregunta.split("|").map((x, j) => <div key={j}>{x.split("*").map((p, i) => <span key={i} style={{color: i % 2 ? AMBAR : "#fff"}}>{p}</span>)}</div>)}</div>
+      </div>
+      {q.opciones.map((o, i) => {
+        const entra = (lectura * i) / q.opciones.length;
+        const k = interpolate(f, [entra, entra + 7], [0, 1], clamp);
+        return <div key={i} style={{position: "absolute", left: SEGURA.izq, right: SEGURA.der, top: 560 + i * 180, height: 150, opacity: k, transform: `translateX(${(1 - k) * -60}px)`,
+          display: "flex", alignItems: "center", gap: 28, padding: "0 30px", background: "rgba(12,12,14,.82)", border: `3px solid ${AMBAR}`, borderRadius: 18, boxShadow: "0 10px 30px rgba(0,0,0,.6)"}}>
+          <div style={{flex: "0 0 96px", height: 96, borderRadius: 48, background: AMBAR, color: "#111", fontFamily: IMPACTO, fontSize: 64, display: "flex", alignItems: "center", justifyContent: "center"}}>{LETRAS[i]}</div>
+          <div style={{fontFamily: SANS, fontWeight: 700, fontSize: 50, lineHeight: 1.1, color: "#fff"}}>{o}</div>
+        </div>;
+      })}
+      {enCuenta && n > 0 && <div style={{position: "absolute", left: 0, right: 0, top: 1110, height: 230, display: "flex", alignItems: "center", justifyContent: "center"}}>
+        <div style={{width: 210, height: 210, borderRadius: 105, border: `10px solid ${AMBAR}`, display: "flex", alignItems: "center", justifyContent: "center",
+          transform: `scale(${1.25 - 0.25 * Math.min(1, dentro * 3)})`, fontFamily: IMPACTO, fontSize: 150, color: "#fff", textShadow: "0 6px 20px #000"}}>{n}</div>
+      </div>}
+    </AbsoluteFill>
+  );
+};
+
 // Cierre: la pregunta para comentar y la llamada al reportaje completo.
 const Final: React.FC<{d: NonNullable<Datos["final"]>; n: number}> = ({d, n}) => {
   const f = useCurrentFrame();
@@ -138,6 +173,7 @@ export const ShortPromo: React.FC<{datos: Datos}> = ({datos: d}) => {
       </div>
       <AbsoluteFill style={{background: "#fff", opacity: g * 0.2}} />
       {d.textos.map((x, i) => <Sequence key={"t" + i} from={fr(x.ini)} durationInFrames={Math.max(1, fr(x.dur))}><Rotulo t={x} /></Sequence>)}
+      {d.quiz && <Sequence from={fr(d.quiz.ini)} durationInFrames={Math.max(1, fr(d.quiz.fin - d.quiz.ini))}><Quiz q={d.quiz} /></Sequence>}
       {d.final && <Sequence from={fr(d.final.ini)}><Final d={d.final} n={DUR - fr(d.final.ini)} /></Sequence>}
       {d.voz.map((v, i) => <Sequence key={"v" + i} from={fr(v.ini)} durationInFrames={fr(v.dur) + 4}><Audio src={m(v.src)} /></Sequence>)}
       {d.musica && <Audio src={m(d.musica.src)} trimBefore={fr(d.musica.desde ?? 0)} volume={volM} />}

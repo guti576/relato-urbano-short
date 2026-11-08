@@ -250,15 +250,21 @@ def cmd_montar(a):
     golpe = efecto("impactos", c, a.s, 0)
     if golpe:
         sfx.append({"t": 0, "src": golpe, "vol": 0.7})
+    qz = g.get("quiz")
+    quiz = None
     for i, b in enumerate(g["beats"]):
         n = str(101 + i)
+        if qz and i == len(g["beats"]) - 1:
+            quiz = {"ini": round(t, 3), "pregunta": qz.get("pregunta", ""), "opciones": qz.get("opciones", [])}
         dur = durs.get(n, 1.2) if b.get("voz") else float(b.get("dur", 1.0))
         if b.get("voz"):
             voz.append({"src": f"shorts/{a.s}/voz/{n}.mp3", "ini": round(t, 3), "dur": dur})
         t0 = 0 if i == 0 else t     # imagen y texto desde el fotograma 0; la voz arranca en el 1-2
         rots = b.get("rot", "")
         rots = rots if isinstance(rots, list) else [rots]
-        tramo = (dur + PAUSA + (t - t0)) / len(rots)   # una frase larga cambia de rótulo a mitad (el deslizador lo pidió en L07)
+        if quiz and i == len(g["beats"]) - 1:
+            rots = []   # en el beat de las opciones, en pantalla solo el quiz
+        tramo = (dur + PAUSA + (t - t0)) / max(len(rots), 1)   # una frase larga cambia de rótulo a mitad (el deslizador lo pidió en L07)
         for j, r in enumerate(rots):
             textos.append({"ini": round(t0 + j * tramo, 3), "dur": round(tramo, 3), "rot": r, **({"ya": True} if i == 0 and j == 0 else {})})
         ps = [plano_de(x, planos_m1, c) for x in b.get("planos", [])]
@@ -272,7 +278,7 @@ def cmd_montar(a):
         libres = [x for x in ps if not x.get("dur")]
         resto = max(0.4, dur + PAUSA + (t - t0) - sum(reparto))
         u = t0
-        if any(x.get("encaje") == "marco" for x in ps):
+        if rots and any(x.get("encaje") == "marco" for x in ps):
             textos[-1]["arriba"] = True
         for x in ps:
             dx = float(x["dur"]) if x.get("dur") else resto / max(len(libres), 1)
@@ -284,6 +290,17 @@ def cmd_montar(a):
             if e:
                 sfx.append({"t": round(t, 3), "src": e, "vol": 0.55})
         t += dur + PAUSA
+    if quiz:
+        cuenta = int(qz.get("cuenta", 3))
+        quiz["cuenta"] = round(t, 3)
+        tic = efecto("documentos", c, a.s, 12)
+        for k in range(cuenta):
+            if tic:
+                sfx.append({"t": round(t + k, 3), "src": tic, "vol": 0.8, "dur": 0.6})
+        if planos:
+            planos[-1]["dur"] = round(t + cuenta - planos[-1]["ini"], 3)
+        t += cuenta
+        quiz["fin"] = round(t, 3)
     final = None
     if g.get("pregunta"):
         n = "199"
@@ -302,7 +319,7 @@ def cmd_montar(a):
     musica = None
     if g.get("musica"):
         musica = {"src": copia_audio(g["musica"]["src"], c, a.s, "musica"), "desde": g["musica"].get("desde", 0), "vol": g["musica"].get("vol", 0.42)}
-    datos = {"dur": round(t, 3), "planos": planos, "textos": textos, "voz": voz, "musica": musica, "sfx": sfx, "final": final}
+    datos = {"dur": round(t, 3), "planos": planos, "textos": textos, "voz": voz, "musica": musica, "sfx": sfx, "final": final, "quiz": quiz}
     json.dump(datos, open(os.path.join(ds, "short.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=1)
     pedida = float(g.get("dur", 0))
     log(f"short.json: {t:.1f} s (pedida {pedida:.0f} s), {len(planos)} planos, {len(voz)} tomas de voz.")
@@ -395,15 +412,39 @@ def reglas_papel(a, s, g, c):
         s("S3", "FALLO", "guion.json sin «dur» (la duración la pide Antonio)")
     rot_txt = lambda b: " ".join(b.get("rot")) if isinstance(b.get("rot"), list) else b.get("rot", "")
     largos = [r for b in beats for r in (b.get("rot") if isinstance(b.get("rot"), list) else [b.get("rot", "")]) if len(palabras(r.replace("|", " "))) > PALABRAS_PANTALLA]
-    clavados = [rot_txt(b)[:30] for b in beats if not isinstance(b.get("rot"), list) and len(palabras(b.get("voz", ""))) > 11]
+    clavados = [rot_txt(b)[:30] for i, b in enumerate(beats) if not isinstance(b.get("rot"), list) and len(palabras(b.get("voz", ""))) > 11
+                and not (g.get("quiz") and i == len(beats) - 1)]
     if clavados:
         s("S4", "AVISO", "frases de más de 11 palabras con un solo rótulo (se queda clavado; pon \"rot\" como lista de dos): " + "; ".join(clavados))
     if len(palabras(g.get("pregunta_voz", ""))) > 9:
         s("S5", "AVISO", f"la pregunta en voz tiene {len(palabras(g['pregunta_voz']))} palabras: alarga la tarjeta final (mejor 9 o menos, p. ej. «¿Y tú qué crees? Te leo abajo.»)")
-    sin = [i + 1 for i, b in enumerate(beats) if b.get("voz") and not b.get("rot")]
+    es_quiz = bool(g.get("quiz"))
+    sin = [i + 1 for i, b in enumerate(beats) if b.get("voz") and not b.get("rot") and not (es_quiz and i == len(beats) - 1)]
     s("S4", "FALLO" if sin else "AVISO" if largos else "OK", f"rótulos: {len(beats)}" + (f" · beats con voz y sin texto en pantalla: {sin}" if sin else "")
       + (f" · de más de {PALABRAS_PANTALLA} palabras: " + "; ".join(x[:40] for x in largos) if largos else ""))
     preg = g.get("pregunta", "")
+    qz = g.get("quiz")
+    if g.get("angulo") == "quiz" or qz:
+        ops = (qz or {}).get("opciones", [])
+        cor = (qz or {}).get("correcta")
+        prob = []
+        if not 3 <= len(ops) <= 4:
+            prob.append(f"{len(ops)} opciones (tienen que ser 3, como mucho 4)")
+        if not isinstance(cor, int) or not 0 <= cor < len(ops):
+            prob.append("falta «correcta» (índice de la opción buena; solo para el control)")
+        if "reportaje" not in (g.get("cta", "") + g.get("comentario_fijado", "")).lower():
+            prob.append("la llamada no dice que la respuesta está en el reportaje")
+        largas = [o for o in ops if len(palabras(o)) > 4]
+        s("S5", "FALLO" if prob else "AVISO" if largas else "OK", "quiz: " + ("; ".join(prob) if prob else f"{len(ops)} opciones")
+          + (f" · opciones de más de 4 palabras: {'; '.join(largas)}" if largas else ""))
+        if isinstance(cor, int) and 0 <= cor < len(ops):
+            # todo lo que se ve o se oye fuera del beat que lee las opciones, más título, descripción y comentario fijado
+            fuera = " ".join([b.get("voz", "") + " " + (" ".join(b["rot"]) if isinstance(b.get("rot"), list) else b.get("rot", "")) for b in beats[:-1]]
+                             + [g.get("titulo", ""), g.get("descripcion", ""), g.get("comentario_fijado", ""), preg, g.get("pregunta_voz", "")])
+            buena = control_hilo.claves(ops[cor]) - set().union(*[control_hilo.claves(o) for j, o in enumerate(ops) if j != cor])
+            escapa = buena & control_hilo.claves(fuera)
+            s("S6", "FALLO" if len(escapa) >= 2 or (buena and escapa == buena) else "OK",
+              "quiz: la respuesta " + (f"se escapa fuera de las opciones ({', '.join(sorted(escapa))})" if len(escapa) >= 2 or (buena and escapa == buena) else "no aparece fuera de las opciones"))
     if g.get("bucle") and not preg:
         # en bucle la pregunta final cortaría la repetición: basta el comentario fijado
         s("S5", "OK" if g.get("comentario_fijado") else "FALLO", "interacción en bucle: sin pregunta final, con comentario fijado" if g.get("comentario_fijado") else "falta el comentario fijado")
@@ -523,7 +564,7 @@ def leer_juez(p):
             "final": g(r"^Me quedo hasta el final:\s*(s[ií]|no)"), "sabe": g(r"^Siento que ya s[ée] c[óo]mo acaba:\s*(s[ií]|no)"),
             "largo": g(r"^Me dan ganas de ver el reportaje completo:\s*(s[ií]|no)"), "comenta": g(r"^Comentar[íi]a:\s*(.+)"),
             "like": g(r"^Le dar[íi]a like:\s*(s[ií]|no)"), "otra": g(r"^Lo ver[íi]a otra vez:\s*(s[ií]|no)"),
-            "veredicto": g(r"^Veredicto:\s*(.+)"), "texto": t}
+            "veredicto": g(r"^Veredicto:\s*(.+)"), "quiz": g(r"^El Short me da la respuesta del quiz:\s*(s[ií]|no)"), "texto": t}
 
 
 def reglas_juez(a, s, ds, tipo):
@@ -541,6 +582,8 @@ def reglas_juez(a, s, ds, tipo):
             prob.append("no llega al final")
         if si("sabe"):
             prob.append("siente que ya sabe cómo acaba (destripa el reportaje)")
+        if si("quiz"):
+            prob.append("el Short le da la respuesta del quiz")
         if e["largo"] and not si("largo"):
             prob.append("no le dan ganas de ver el reportaje")
         if not e["comenta"] or re.match(r"(nada|no coment)", e["comenta"]):
@@ -551,7 +594,7 @@ def reglas_juez(a, s, ds, tipo):
             avis.append("no lo vería otra vez")
         if not e["veredicto"].startswith("funciona"):
             prob.append(f"veredicto: {e['veredicto'] or 'sin veredicto'}")
-        r = "S1" if "desliza" in " ".join(prob) else "S6" if "sabe" in " ".join(prob) else "S5"
+        r = "S1" if "desliza" in " ".join(prob) else "S6" if ("sabe" in " ".join(prob) or "respuesta del quiz" in " ".join(prob)) else "S5"
         s(r, "FALLO" if prob else "AVISO" if avis else "OK", f"deslizador {tipo} ({tag}): " + ("; ".join(prob + avis) or f"se queda, comentaría «{e['comenta'][:60]}»"))
 
 
@@ -601,6 +644,7 @@ Me dan ganas de ver el reportaje completo: sí|no
 Comentaría: <lo que escribiría en los comentarios, palabra por palabra, o «nada»>
 Le daría like: sí|no
 Lo vería otra vez: sí|no
+El Short me da la respuesta del quiz: sí|no|no hay quiz
 
 Veredicto: funciona|no funciona
 """
@@ -621,6 +665,11 @@ def cmd_juez(a):
             rt = " / ".join(b["rot"]) if isinstance(b.get("rot"), list) else b.get("rot", "")
             cuerpo += f"- [{t:.1f} s] se ve: {vista or '(sigue la imagen anterior)'} · en pantalla: «{rt.replace('|', ' ').replace('*', '')}» · voz: «{b.get('voz', '')}»\n"
             t += len(palabras(b.get("voz", ""))) / 2.8 + PAUSA
+        if g.get("quiz"):
+            q = g["quiz"]
+            cuerpo += (f"- [{t:.1f} s] en pantalla: la pregunta «{q.get('pregunta', '').replace('|', ' ').replace('*', '')}» y las opciones "
+                       + " ".join(f"{'ABCD'[i]}) {o}" for i, o in enumerate(q.get("opciones", []))) + f"; cuenta atrás de {q.get('cuenta', 3)} s con un tic por segundo\n")
+            t += q.get("cuenta", 3)
         cuerpo += f"- [{t:.1f} s] en pantalla: «{g.get('pregunta', '').replace('|', ' ').replace('*', '')}» y «{g.get('cta', '')}» · voz: «{g.get('pregunta_voz', '')}»\n"
         cuerpo += f"\nTítulo del Short: {g.get('titulo', '')}\n"
     else:

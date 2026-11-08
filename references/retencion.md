@@ -2,15 +2,28 @@
 
 Lo que pidió Antonio (8-11-2026): Shorts **que tengan impacto**, que la gente **aguante hasta el final y no deslice**, que **comente y dé like**, y que **lleven al reportaje largo**. YouTube posiciona un Short por cuántos lo ven en vez de deslizar, cuánto ven (y si lo repiten) y cuánta interacción provoca. Todo lo de abajo sirve a eso.
 
-## Los tres ángulos (uno por Short; nunca dos iguales del mismo reportaje)
+## Los ángulos (uno por Short; nunca dos iguales del mismo reportaje)
+
+Por defecto se proponen tres: **tráiler, quiz y dato**. El quiz lo pidió Antonio (8-11-2026) como una de las propuestas fijas, porque hace comentar. El dilema queda como alternativa al quiz cuando el caso no da para una pregunta con respuesta.
 
 | Ángulo | Para qué | Estructura | Pregunta final |
 |---|---|---|---|
 | **tráiler** | Llevar al reportaje | Gancho con el hecho más fuerte → 2 giros que suben → la pregunta del caso sin responder | «¿…? La respuesta, en el reportaje» |
-| **dilema** | Comentarios | Un dato polémico o una decisión discutible del caso → las dos posturas en 2 frases cada una | «¿A o B?», fácil de contestar en una palabra |
+| **quiz** | Comentarios | Pregunta de entrada con su imagen → 2-3 frases de contexto → 3 opciones en pantalla, leídas por la voz → cuenta atrás de 3 s → **sin solución** | «Comenta A, B o C» · «La respuesta, en el reportaje del canal» |
+| **dilema** | Comentarios (alternativa al quiz) | Un dato polémico o una decisión discutible del caso → las dos posturas en 2 frases cada una | «¿A o B?», fácil de contestar en una palabra |
 | **dato** | Repetición y likes | Un solo hecho increíble explicado con la pieza explicativa del reportaje, en bucle | Opcional; la última frase enlaza con la primera |
 
 Si Antonio pide otra cosa, manda lo suyo. Si pide más de tres, se repite ángulo con otro gancho y otros planos.
+
+## El quiz (quick quiz)
+
+- **Una pregunta con respuesta comprobada** que el reportaje sí da. Sale de la hoja «Hechos y fuentes» (Demostrado), nunca de algo que no se sabe. Por ejemplo, en Columbia: «¿Qué hizo la NASA cuando pidieron fotos del ala dañada?».
+- **La pregunta va en el primer segundo**, en voz y en pantalla, con la imagen del caso más inquietante. El contexto viene después y es corto: el espectador ya está jugando.
+- **Tres opciones**, cortas (4 palabras como mucho) y todas creíbles. La buena no es siempre la B, ni la más larga, ni la más rara. Con una opción absurda el quiz parece de broma.
+- **La voz lee las opciones** («¿A, las pidió al ejército? ¿B…?») y entra la **cuenta atrás de 3 s** con un tic por segundo. Mientras dura, nada más en pantalla.
+- **La respuesta no se da nunca, ni se insinúa.** Ni en la voz, ni en el texto, ni en la descripción, ni en el comentario fijado. Está en el reportaje: el cierre lo dice («La respuesta, en el reportaje del canal») y el reportaje va como vídeo relacionado.
+- **Cierre:** en pantalla, «COMENTA: *A*, *B* O *C*». En voz, «¿Cuál dices tú? Te leo abajo». Comentario fijado: «¿A, B o C? La respuesta, en el reportaje del canal 👇».
+- **Cuando el Short ya lleva días publicado**, se puede responder a los comentarios remitiendo al minuto del reportaje donde está la respuesta, sin decirla.
 
 ## Los dos primeros segundos (puerta S1)
 
