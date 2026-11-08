@@ -177,7 +177,7 @@ def cmd_voz(a):
 
 # ------------------------------------------------------------------ montaje
 
-def plano_de(ref, planos_m1):
+def plano_de(ref, planos_m1, c=None):
     """Un plano del Short a partir de {"de": n} (plano n del reportaje) o escrito a mano."""
     p = dict(ref)
     if "de" in p:
@@ -194,6 +194,21 @@ def plano_de(ref, planos_m1):
             base["explicativa"] = True
         base.update(p)
         p = base
+    if c and p.get("tipo") in ("V", "F") and "encaje" not in p and not p.get("foco"):
+        # archivo de baja resolución: recortado en vertical se amplía unas 3 veces y se pixela; mejor enmarcado
+        alto = 0
+        if p["tipo"] == "V" and p.get("clip"):
+            f = os.path.join(c, "remotion", "public", "m", "clips", p["clip"])
+            if os.path.exists(f):
+                r = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries", "stream=height", "-of", "csv=p=0", f], capture_output=True, text=True)
+                alto = int((r.stdout.strip() or "0").split(",")[0] or 0)
+        elif p.get("img"):
+            f = os.path.join(c, "remotion", "public", "m", "fotos", p["img"])
+            if os.path.exists(f):
+                from PIL import Image
+                alto = Image.open(f).size[1]
+        if 0 < alto < (720 if p["tipo"] == "V" else 1200):
+            p["encaje"] = "marco"
     if p.get("tipo") == "A" and "encaje" not in p:
         # una pieza tiene su propio texto (títulos, cifras): recortada lo pierde. Se recorta solo si se pide foco.
         p["encaje"] = "recorte" if p.get("foco") else "marco"
@@ -241,8 +256,12 @@ def cmd_montar(a):
         if b.get("voz"):
             voz.append({"src": f"shorts/{a.s}/voz/{n}.mp3", "ini": round(t, 3), "dur": dur})
         t0 = 0 if i == 0 else t     # imagen y texto desde el fotograma 0; la voz arranca en el 1-2
-        textos.append({"ini": round(t0, 3), "dur": round(dur + PAUSA + (t - t0), 3), "rot": b.get("rot", ""), **({"ya": True} if i == 0 else {})})
-        ps = [plano_de(x, planos_m1) for x in b.get("planos", [])]
+        rots = b.get("rot", "")
+        rots = rots if isinstance(rots, list) else [rots]
+        tramo = (dur + PAUSA + (t - t0)) / len(rots)   # una frase larga cambia de rótulo a mitad (el deslizador lo pidió en L07)
+        for j, r in enumerate(rots):
+            textos.append({"ini": round(t0 + j * tramo, 3), "dur": round(tramo, 3), "rot": r, **({"ya": True} if i == 0 and j == 0 else {})})
+        ps = [plano_de(x, planos_m1, c) for x in b.get("planos", [])]
         if not ps:
             # sin planos nuevos, sigue el anterior (alargado, no repetido desde su inicio)
             if planos:
@@ -374,7 +393,13 @@ def reglas_papel(a, s, g, c):
         s("S3", "OK" if lo <= total <= hi else "AVISO", f"{total} palabras para {dur:.0f} s (cabe entre {lo:.0f} y {hi:.0f} a la velocidad de los Shorts)")
     else:
         s("S3", "FALLO", "guion.json sin «dur» (la duración la pide Antonio)")
-    largos = [b.get("rot", "") for b in beats if len(palabras(b.get("rot", "").replace("|", " "))) > PALABRAS_PANTALLA]
+    rot_txt = lambda b: " ".join(b.get("rot")) if isinstance(b.get("rot"), list) else b.get("rot", "")
+    largos = [r for b in beats for r in (b.get("rot") if isinstance(b.get("rot"), list) else [b.get("rot", "")]) if len(palabras(r.replace("|", " "))) > PALABRAS_PANTALLA]
+    clavados = [rot_txt(b)[:30] for b in beats if not isinstance(b.get("rot"), list) and len(palabras(b.get("voz", ""))) > 11]
+    if clavados:
+        s("S4", "AVISO", "frases de más de 11 palabras con un solo rótulo (se queda clavado; pon \"rot\" como lista de dos): " + "; ".join(clavados))
+    if len(palabras(g.get("pregunta_voz", ""))) > 9:
+        s("S5", "AVISO", f"la pregunta en voz tiene {len(palabras(g['pregunta_voz']))} palabras: alarga la tarjeta final (mejor 9 o menos, p. ej. «¿Y tú qué crees? Te leo abajo.»)")
     sin = [i + 1 for i, b in enumerate(beats) if b.get("voz") and not b.get("rot")]
     s("S4", "FALLO" if sin else "AVISO" if largos else "OK", f"rótulos: {len(beats)}" + (f" · beats con voz y sin texto en pantalla: {sin}" if sin else "")
       + (f" · de más de {PALABRAS_PANTALLA} palabras: " + "; ".join(x[:40] for x in largos) if largos else ""))
@@ -393,7 +418,7 @@ def reglas_papel(a, s, g, c):
     hilo = control_hilo.leer_hilo(hojas) or {}
     if hilo.get("actos", {}).get(4):
         guarda.append(hilo["actos"][4])
-    texto = " ".join([b.get("voz", "") + " " + b.get("rot", "") for b in beats] + [preg])
+    texto = " ".join([b.get("voz", "") + " " + rot_txt(b) for b in beats] + [preg])
     claves_t = control_hilo.claves(texto)
     sosp = [x[:70] for x in guarda if len(control_hilo.claves(x) & claves_t) >= 3]
     s("S6", "AVISO" if sosp else "OK", "spoilers: " + ("el Short comparte palabras con lo que el reportaje se guarda, compruébalo: " + " / ".join(sosp[:3]) if sosp else "no repite lo que el reportaje se guarda"))
@@ -593,7 +618,8 @@ def cmd_juez(a):
         t = 0.0
         for b in g["beats"]:
             vista = "; ".join(x.get("ves") or x.get("txt") or "" for x in b.get("planos", []))
-            cuerpo += f"- [{t:.1f} s] se ve: {vista or '(sigue la imagen anterior)'} · en pantalla: «{b.get('rot', '').replace('|', ' ').replace('*', '')}» · voz: «{b.get('voz', '')}»\n"
+            rt = " / ".join(b["rot"]) if isinstance(b.get("rot"), list) else b.get("rot", "")
+            cuerpo += f"- [{t:.1f} s] se ve: {vista or '(sigue la imagen anterior)'} · en pantalla: «{rt.replace('|', ' ').replace('*', '')}» · voz: «{b.get('voz', '')}»\n"
             t += len(palabras(b.get("voz", ""))) / 2.8 + PAUSA
         cuerpo += f"- [{t:.1f} s] en pantalla: «{g.get('pregunta', '').replace('|', ' ').replace('*', '')}» y «{g.get('cta', '')}» · voz: «{g.get('pregunta_voz', '')}»\n"
         cuerpo += f"\nTítulo del Short: {g.get('titulo', '')}\n"

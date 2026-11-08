@@ -39,7 +39,7 @@ const Imagen: React.FC<{p: Plano; n: number}> = ({p, n}) => {
     : <Img src={m((p.tipo === "D" ? "img/" : "fotos/") + p.img)} style={estilo} />;
   if (p.encaje === "marco") {
     return <AbsoluteFill style={{background: "#000", overflow: "hidden"}}>
-      {fuente({position: "absolute", inset: -80, width: W + 160, height: H + 160, objectFit: "cover", filter: "blur(44px) brightness(.3) saturate(.6)"})}
+      {fuente({position: "absolute", inset: -80, width: W + 160, height: H + 160, objectFit: "cover", filter: "blur(40px) brightness(.5) saturate(.7)"})}
       <div style={{position: "absolute", left: 0, top: 700, width: W, height: 608, overflow: "hidden"}}>
         {fuente({width: "100%", height: "100%", objectFit: "cover", objectPosition: `${fx * 100}% ${fy * 100}%`, transform: `scale(${z})`, filter: filtro})}
       </div>
@@ -63,7 +63,7 @@ const PiezaV: React.FC<{p: Plano; n: number}> = ({p, n}) => {
     const sf = (H / 1080) * 1.1;
     return <AbsoluteFill style={{background: "#07080A", overflow: "hidden"}}>
       {/* detrás, la misma pieza ampliada y desenfocada: rellena el vertical sin dejar negro */}
-      <div style={{position: "absolute", left: (W - 1920 * sf) / 2, top: (H - 1080 * sf) / 2, width: 1920, height: 1080, transformOrigin: "0 0", transform: `scale(${sf})`, filter: "blur(26px) brightness(.32) saturate(.7)"}}>{pieza}</div>
+      <div style={{position: "absolute", left: (W - 1920 * sf) / 2, top: (H - 1080 * sf) / 2, width: 1920, height: 1080, transformOrigin: "0 0", transform: `scale(${sf})`, filter: "blur(22px) brightness(.55) saturate(.8)"}}>{pieza}</div>
       <div style={{position: "absolute", left: 0, top: 700, width: 1920, height: 1080, transformOrigin: "0 0", transform: `scale(${s * zoomDe(p, f, n)})`}}>{pieza}</div>
     </AbsoluteFill>;
   }
@@ -104,13 +104,13 @@ const Final: React.FC<{d: NonNullable<Datos["final"]>; n: number}> = ({d, n}) =>
   const late = 1 + 0.03 * Math.sin(f / 4);
   return (
     <AbsoluteFill>
-      <AbsoluteFill style={{background: "rgba(0,0,0,.8)", opacity: a}} />
+      <AbsoluteFill style={{background: "radial-gradient(ellipse at 50% 45%, rgba(0,0,0,.35) 0%, rgba(0,0,0,.6) 100%)", opacity: a}} />
       <div style={{position: "absolute", left: SEGURA.izq, right: SEGURA.der, top: 520, height: 640, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", textAlign: "center"}}>
-        <div style={{opacity: a, transform: `scale(${(0.9 + 0.1 * a) * late})`, fontFamily: IMPACTO, fontSize: 104, lineHeight: 1.1, color: "#fff", textShadow: "0 6px 24px #000"}}>
+        <div style={{opacity: a, transform: `scale(${(0.9 + 0.1 * a) * late})`, fontFamily: IMPACTO, fontSize: 122, lineHeight: 1.08, color: "#fff", textShadow: "0 6px 24px #000"}}>
           {d.pregunta.split("|").map((x, j) => <div key={j}>{x.split("*").map((q, i) => <span key={i} style={{color: i % 2 ? AMBAR : "#fff"}}>{q}</span>)}</div>)}
         </div>
-        <div style={{opacity: b, marginTop: 46, fontFamily: SANS, fontWeight: 700, fontSize: 44, letterSpacing: 2, color: "#F2ECE0", textShadow: "0 3px 12px #000"}}>{d.cta}</div>
-        {d.like && <div style={{opacity: b, marginTop: 22, fontFamily: SANS, fontWeight: 600, fontSize: 38, color: AMBAR, textShadow: "0 3px 12px #000"}}>{d.like}</div>}
+        <div style={{opacity: b, marginTop: 46, fontFamily: SANS, fontWeight: 700, fontSize: 54, letterSpacing: 2, color: "#F2ECE0", textShadow: "0 3px 12px #000"}}>{d.cta}</div>
+        {d.like && <div style={{opacity: b, marginTop: 24, fontFamily: SANS, fontWeight: 700, fontSize: 48, color: AMBAR, textShadow: "0 3px 12px #000"}}>{d.like}</div>}
       </div>
     </AbsoluteFill>
   );
