@@ -25,6 +25,18 @@ Si Antonio pide otra cosa, manda lo suyo. Si pide más de tres, se repite ángul
 - **Cierre:** en pantalla, «COMENTA: *A*, *B* O *C*». En voz, «¿Cuál dices tú? Te leo abajo». Comentario fijado: «¿A, B o C? La respuesta, en el reportaje del canal 👇».
 - **Cuando el Short ya lleva días publicado**, se puede responder a los comentarios remitiendo al minuto del reportaje donde está la respuesta, sin decirla.
 
+## Quien lo ve no sabe nada del caso (puerta S10)
+
+Lo pidió Antonio (9-11-2026). El Short le sale a gente que **no ha visto el reportaje ni ha oído hablar del caso**: no sabe quién es nadie, dónde pasa ni cuándo. El guion se escribe para esa persona, no para quien ya conoce la historia.
+
+- **Nada se da por sabido.** Cada nombre propio entra con lo que es («Linda Ham, la jefa de la misión», nunca «Linda Ham» a secas). Si no hace falta el nombre, mejor el cargo: «la jefa de la misión».
+- **Siglas y lugares, explicados o fuera.** «La NASA» se entiende; «el MMT», «Aralsk-7» o «la DEA» no: «el comité que dirigía la misión», «una isla secreta soviética».
+- **Situar en la primera o segunda frase:** qué pasó, dónde y cuándo, en pocas palabras («En 2003, un transbordador con siete astronautas…»). El gancho choca; el contexto llega justo detrás, sin frenar.
+- **Como mucho dos personajes con nombre** por Short. Más, y el espectador se pierde.
+- **Ningún «como vimos», «el famoso caso»** ni nada que remita a algo que no ha visto.
+- **El quiz también:** la pregunta y las tres opciones se tienen que entender sin conocer el caso; el contexto de antes basta para elegir.
+- El deslizador a ciegas lee el Short como alguien que no conoce el caso y dice si se ha perdido y con qué palabra.
+
 ## Los dos primeros segundos (puerta S1)
 
 - **Fotograma 0 con imagen en movimiento y texto.** Nada de negro, logo, título ni fundido de entrada.

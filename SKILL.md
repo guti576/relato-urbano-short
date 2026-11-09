@@ -11,6 +11,8 @@ Antonio dice de qué reportaje y de qué duración; tú haces el resto y te para
 
 Lo pidió Antonio (8-11-2026): **impacto**, que **no deslicen y aguanten hasta el final**, que **comenten y den like**, y que **lleven al reportaje largo**, porque así los posiciona YouTube. Las reglas concretas están en `references/retencion.md`: léelas antes de escribir nada.
 
+**Quien ve el Short no conoce el caso** (Antonio, 9-11-2026): no ha visto el reportaje ni sabe quién es nadie. La narración lo sitúa (qué, dónde, cuándo) y explica cada nombre, sigla y lugar al entrar; si no, se pierde y desliza.
+
 Por defecto, **tres Shorts por reportaje, cada uno con un ángulo**: tráiler, **quiz** y dato. El quiz (Antonio, 8-11-2026) es un quick quiz para que la gente comente: pregunta, tres opciones, cuenta atrás y «Comenta A, B o C»; **la respuesta no se da: está en el reportaje publicado en el canal**. El dilema queda como alternativa al quiz. Todos todos de la duración que diga Antonio (o la que diga para cada uno). Con voz de Fish (Gabriel VO, modelo de pago para publicar).
 
 ## El proceso

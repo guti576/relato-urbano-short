@@ -13,10 +13,11 @@ Las mismas ideas que el reglamento del reportaje: lo que se puede comprobar lo c
 | S7 | Bucle | Marcado si el ángulo lo pide | El último plano es el primero (aviso) |
 | S8 | Técnica | Música del maestro de audio | 1080x1920, -14 LUFS ±1, pico ≤ -1 dBTP |
 | S9 | Ángulos distintos | Ningún Short del mismo reportaje comparte ángulo ni plano de gancho (fallo); más del 25 % de planos en común, aviso | Igual |
+| S10 | Sin conocer el caso | Cada nombre, sigla y lugar explicado al entrar; situado (qué, dónde, cuándo) en las dos primeras frases; dos personajes con nombre como mucho (`retencion.md`) | El deslizador, que no conoce el caso, no se pierde (fallo si dice que sí) |
 
 ## El deslizador (juez a ciegas)
 
-Un subagente nuevo, sin contexto, que hace de espectador con el pulgar sobre la pantalla. Encargo fijo en `short.py` (`FORMULARIO`): si desliza en el segundo 1 o antes del 3, si llega al final, si siente que ya sabe cómo acaba, si le dan ganas de ver el reportaje, qué comentaría palabra por palabra, si daría like y si lo vería otra vez.
+Un subagente nuevo, sin contexto, que hace de espectador con el pulgar sobre la pantalla y **no conoce el caso**. Encargo fijo en `short.py` (`FORMULARIO`): si desliza en el segundo 1 o antes del 3, si llega al final, si siente que ya sabe cómo acaba, si le dan ganas de ver el reportaje, qué comentaría palabra por palabra, si daría like y si lo vería otra vez.
 
 - **En papel** (`short.py juez <id> S1 papel`): antes de pagar la voz, con lo que se ve y se oye escrito. Es lo barato: aquí se cambia el gancho.
 - **Montado** (`short.py juez <id> S1 video`): con los fotogramas de los 3 primeros segundos cada 0,25 s y uno por segundo del resto.

@@ -386,7 +386,7 @@ class Sem:
 
 
 NOMBRES = {"S1": "gancho", "S2": "ritmo", "S3": "duración y voz", "S4": "texto legible", "S5": "interacción", "S6": "sin destripar",
-           "S7": "bucle", "S8": "técnica", "S9": "ángulos distintos"}
+           "S7": "bucle", "S8": "técnica", "S9": "ángulos distintos", "S10": "sin conocer el caso"}
 
 
 def palabras(t):
@@ -564,7 +564,7 @@ def leer_juez(p):
             "final": g(r"^Me quedo hasta el final:\s*(s[ií]|no)"), "sabe": g(r"^Siento que ya s[ée] c[óo]mo acaba:\s*(s[ií]|no)"),
             "largo": g(r"^Me dan ganas de ver el reportaje completo:\s*(s[ií]|no)"), "comenta": g(r"^Comentar[íi]a:\s*(.+)"),
             "like": g(r"^Le dar[íi]a like:\s*(s[ií]|no)"), "otra": g(r"^Lo ver[íi]a otra vez:\s*(s[ií]|no)"),
-            "veredicto": g(r"^Veredicto:\s*(.+)"), "quiz": g(r"^El Short me da la respuesta del quiz:\s*(s[ií]|no)"), "texto": t}
+            "veredicto": g(r"^Veredicto:\s*(.+)"), "perdido": g(r"^Me he perdido:\s*(s[ií]|no)"), "quiz": g(r"^El Short me da la respuesta del quiz:\s*(s[ií]|no)"), "texto": t}
 
 
 def reglas_juez(a, s, ds, tipo):
@@ -584,6 +584,8 @@ def reglas_juez(a, s, ds, tipo):
             prob.append("siente que ya sabe cómo acaba (destripa el reportaje)")
         if si("quiz"):
             prob.append("el Short le da la respuesta del quiz")
+        if si("perdido"):
+            prob.append("se pierde: no conoce el caso y algo no se explica")
         if e["largo"] and not si("largo"):
             prob.append("no le dan ganas de ver el reportaje")
         if not e["comenta"] or re.match(r"(nada|no coment)", e["comenta"]):
@@ -594,7 +596,7 @@ def reglas_juez(a, s, ds, tipo):
             avis.append("no lo vería otra vez")
         if not e["veredicto"].startswith("funciona"):
             prob.append(f"veredicto: {e['veredicto'] or 'sin veredicto'}")
-        r = "S1" if "desliza" in " ".join(prob) else "S6" if ("sabe" in " ".join(prob) or "respuesta del quiz" in " ".join(prob)) else "S5"
+        r = "S1" if "desliza" in " ".join(prob) else "S10" if "se pierde" in " ".join(prob) else "S6" if ("sabe" in " ".join(prob) or "respuesta del quiz" in " ".join(prob)) else "S5"
         s(r, "FALLO" if prob else "AVISO" if avis else "OK", f"deslizador {tipo} ({tag}): " + ("; ".join(prob + avis) or f"se queda, comentaría «{e['comenta'][:60]}»"))
 
 
@@ -639,6 +641,7 @@ Peor momento: <segundo> · <por qué>
 
 ## Al terminar
 Qué he entendido: <una frase>
+Me he perdido: sí|no · <qué nombre, lugar, sigla o cosa no sé qué es, o en qué momento ya no sé de qué va>
 Siento que ya sé cómo acaba: sí|no · <la historia completa, no este Short>
 Me dan ganas de ver el reportaje completo: sí|no
 Comentaría: <lo que escribiría en los comentarios, palabra por palabra, o «nada»>
@@ -656,6 +659,8 @@ def cmd_juez(a):
     out = os.path.join(ds, "_juez")
     os.makedirs(out, exist_ok=True)
     cuerpo = f"# Encargo: el deslizador ({'guion' if a.tipo == 'papel' else 'Short montado'})\n\n{NO_AMABLE}\n\n"
+    cuerpo += ("No conoces este caso: es la primera vez que oyes hablar de él y no sabes quién es nadie ni dónde pasa. "
+               "Si un nombre, una sigla o un sitio no te dicen nada, dilo.\n\n")
     if a.tipo == "papel":
         cuerpo += ("Abajo está un Short de YouTube de unos " + str(g.get("dur")) + " s, escrito: qué se ve y qué se oye en cada momento. "
                    "Imagínalo en el móvil, a pantalla completa, entre otros cien. Léelo una sola vez.\n\n" + FORMULARIO + "\n---\n\n## El Short\n\n")
