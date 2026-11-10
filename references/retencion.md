@@ -91,6 +91,7 @@ Un Short promociona: **no da la respuesta**. Lo que el reportaje se guarda (hoja
 
 ## Imagen y sonido
 
+- **Movimiento siempre (Antonio, 10-11-2026).** Un Short no es una foto con texto y voz. Al menos tres cuartas partes del tiempo son **clips de vídeo** o **piezas animadas**. Las piezas, solo **las que quedaron muy bien**: con movimiento claro, que se lean en vertical y que no sean una tarjeta de cifras quieta (mira su fotograma antes de elegirla). Las fotos y los documentos solo de paso, con zoom y 1,5 s como mucho. Si el reportaje no tiene clips para un momento, se busca otro momento, no se rellena con fotos.
 - Solo material del propio reportaje (sus clips, fotos, documentos y piezas). Si falta algo, se baja como en el reportaje (fuentes_material.md), con licencia y crédito.
 - Personas de stock reconocibles nunca como víctimas, culpables ni enfermos.
 - Música: solo del maestro de audio (`relato-urbano-reportaje/audio/musica/<uso>/`), elegida por el ángulo: tráiler → `climax` o `tension`; dilema → `misterio`; dato → `pulso`. Nada de Pixabay ni otras fuentes: Content ID.

@@ -5,7 +5,7 @@ Las mismas ideas que el reglamento del reportaje: lo que se puede comprobar lo c
 | # | Puerta | Guion (`--papel`, antes de pagar voz) | Vídeo montado |
 |---|---|---|---|
 | S1 | Gancho | Primera frase de 12 palabras o menos; el primer beat tiene imagen | La voz arranca antes de 0,3 s y el primer cambio de plano llega antes de 1,6 s; el deslizador no desliza en el 1 ni antes del 3 |
-| S2 | Ritmo | — | Ningún plano de más de 2,5 s (explicativas, 4 s); ningún tramo quieto de 1,2 s o más |
+| S2 | Ritmo e imagen en movimiento | El 75 % del tiempo o más en clips o piezas animadas (fallo) | Lo mismo con los tiempos reales; ninguna foto ni documento de más de 1,5 s; ningún plano de más de 2,5 s (explicativas, 4 s); ningún tramo quieto de 1,2 s o más |
 | S3 | Duración y voz | Palabras dentro del presupuesto de la duración pedida | Duración a ±15 % de la pedida (fallo); 2,4-3,4 palabras por segundo (aviso) |
 | S4 | Texto legible | Cada frase con su rótulo; 7 palabras por rótulo como mucho | (lo garantiza la plantilla: zona segura y tamaño) |
 | S5 | Interacción | Pregunta final, su versión en voz, comentario fijado y llamada al reportaje; pregunta fácil de contestar; título de 60 caracteres o menos | El deslizador escribe un comentario concreto (fallo si «nada»); like y repetición, aviso. **Quiz:** 3 opciones (4 como mucho) de 4 palabras o menos, `correcta` marcada y la llamada dice que la respuesta está en el reportaje |

@@ -37,6 +37,9 @@ PLANO_MAX = 2.5           # s por plano; las piezas explicativas, 4
 PLANO_MAX_EXPLIC = 4.0
 PALABRAS_PANTALLA = 7     # palabras por rótulo como mucho
 VOZ_MODELOS = ("s2.1-pro", "s2.1-pro-free")
+VOZ_GRATIS = "es-ES-AlvaroNeural"   # borrador gratis (Edge); Fish solo con el ok final (Antonio, 10-11-2026)
+MOVIMIENTO_MIN = 0.75    # parte del Short en clips o piezas animadas
+FOTO_MAX = 1.5           # s por foto o documento, de paso
 
 
 def log(*a):
@@ -144,35 +147,88 @@ def frases_guion(g):
     return out
 
 
+def pronunciar(t, c, ds):
+    """Aplica pronunciacion.txt (palabra = como suena) a la voz gratuita; Fish lo hace en voz_fish.py."""
+    for p in (os.path.join(ds, "pronunciacion.txt"), os.path.join(c, "pronunciacion.txt")):
+        if os.path.exists(p):
+            for l in open(p, encoding="utf-8"):
+                if "=" in l and not l.strip().startswith("#"):
+                    k, v = (x.strip() for x in l.split("=", 1))
+                    if k:
+                        t = re.sub(rf"(?<!\w){re.escape(k)}(?!\w)", v, t)
+            break
+    return t
+
+
+def voz_gratis(frases, sal):
+    """Voz gratuita de Microsoft: la neuronal de Edge (Álvaro) y, sin internet, la de Windows (Helena, SAPI)."""
+    os.makedirs(sal, exist_ok=True)
+    try:
+        import asyncio
+        import edge_tts
+
+        async def todas():
+            for n, t in frases:
+                await edge_tts.Communicate(t, VOZ_GRATIS).save(os.path.join(sal, f"{n}.mp3"))
+        asyncio.run(todas())
+        return VOZ_GRATIS
+    except Exception as e:  # sin internet o sin edge-tts: la voz de Windows instalada
+        log(f"Edge no responde ({type(e).__name__}): uso la voz de Windows.")
+    for n, t in frases:
+        wav = os.path.join(sal, f"{n}.wav")
+        ps = ("Add-Type -AssemblyName System.Speech; $s = New-Object System.Speech.Synthesis.SpeechSynthesizer; "
+              "$v = $s.GetInstalledVoices() | Where-Object { $_.VoiceInfo.Culture.Name -eq 'es-ES' } | Select-Object -First 1; "
+              "if ($v) { $s.SelectVoice($v.VoiceInfo.Name) }; $s.SetOutputToWaveFile($env:SHORT_WAV); $s.Speak($env:SHORT_TXT); $s.Dispose()")
+        subprocess.run(["powershell", "-NoProfile", "-Command", ps], check=True, env={**os.environ, "SHORT_WAV": wav, "SHORT_TXT": t})
+        subprocess.run(["ffmpeg", "-y", "-v", "error", "-i", wav, "-b:a", "192k", os.path.join(sal, f"{n}.mp3")], check=True)
+        os.remove(wav)
+    return "windows-sapi"
+
+
 def cmd_voz(a):
+    """Borrador con la voz gratuita; Fish (de pago) solo con el ok final de Antonio a ese Short."""
     c, ds = carpeta(a), dir_short(a)
     g = leer_guion(a)
-    lin = [f"{n}. {t}" for n, t in frases_guion(g)]
-    open(os.path.join(ds, "m1_voz.md"), "w", encoding="utf-8").write("\n".join(lin) + "\n")
+    frases = frases_guion(g)
+    open(os.path.join(ds, "m1_voz.md"), "w", encoding="utf-8").write("\n".join(f"{n}. {t}" for n, t in frases) + "\n")
     for f in ("pronunciacion.txt",):
         if os.path.exists(os.path.join(c, f)) and not os.path.exists(os.path.join(ds, f)):
             shutil.copy(os.path.join(c, f), os.path.join(ds, f))
-    cmd = [sys.executable, os.path.join(REP, "scripts", "voz_fish.py"), a.s, "--raiz", os.path.join(c, "shorts")]
-    if a.presupuesto or not a.modelo:
-        cmd.append("--presupuesto")
+    if a.modelo or a.presupuesto:
+        if a.modelo and not a.presupuesto:
+            if not a.ok:
+                sys.exit("La voz de Fish se paga y va solo con el ok final de Antonio a este Short: "
+                         f"short.py voz {a.id} {a.s} --modelo {a.modelo} --ok \"<sus palabras>\". "
+                         "Mientras tanto, el borrador va con la voz gratuita (short.py voz sin --modelo).")
+            e, pe = estado_shorts(c)
+            e.setdefault(a.s, {"rondas": 0, "notas": []})["ok_final"] = a.ok
+            json.dump(e, open(pe, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+        cmd = [sys.executable, os.path.join(REP, "scripts", "voz_fish.py"), a.s, "--raiz", os.path.join(c, "shorts")]
+        if a.presupuesto:
+            cmd.append("--presupuesto")
+        else:
+            cmd += ["--modelo", a.modelo] + (["--rehacer", a.rehacer] if a.rehacer else []) + (["--autoriza", a.autoriza] if a.autoriza else [])
+        r = subprocess.run(cmd)
+        if r.returncode or a.presupuesto:
+            return
+        origen, modelo = os.path.join(ds, "voz_fish"), a.modelo
     else:
-        cmd += ["--modelo", a.modelo] + (["--rehacer", a.rehacer] if a.rehacer else []) + (["--autoriza", a.autoriza] if a.autoriza else [])
-    r = subprocess.run(cmd)
-    if r.returncode or a.presupuesto or not a.modelo:
-        return
+        origen = os.path.join(ds, "voz_gratis")
+        modelo = voz_gratis([(n, pronunciar(t, c, ds)) for n, t in frases], origen)
     # tomas limpias: sin silencio en los extremos y un poco más rápidas
     dst = os.path.join(c, "remotion", "public", "m", "shorts", a.s, "voz")
     os.makedirs(dst, exist_ok=True)
     durs = {}
-    for n, _ in frases_guion(g):
-        src = os.path.join(ds, "voz_fish", f"{n}.mp3")
+    for n, _ in frases:
+        src = os.path.join(origen, f"{n}.mp3")
         out = os.path.join(dst, f"{n}.mp3")
         filtro = ("silenceremove=start_periods=1:start_threshold=-45dB:start_silence=0.02,areverse,"
                   "silenceremove=start_periods=1:start_threshold=-45dB:start_silence=0.05,areverse," f"atempo={VELOCIDAD}")
         subprocess.run(["ffmpeg", "-y", "-v", "error", "-i", src, "-af", filtro, "-ar", "44100", "-b:a", "192k", out], check=True)
         durs[n] = round(ffprobe_dur(out), 3)
-    json.dump({"modelo": a.modelo, "durs": durs}, open(os.path.join(ds, "voz.json"), "w"), indent=1)
-    log(f"Voz lista: {len(durs)} tomas, {sum(durs.values()):.1f} s a {VELOCIDAD}x. Siguiente: short.py montar {a.id} {a.s}")
+    json.dump({"modelo": modelo, "gratis": origen.endswith("voz_gratis"), "durs": durs}, open(os.path.join(ds, "voz.json"), "w"), indent=1)
+    log(f"Voz {'gratuita (borrador)' if origen.endswith('voz_gratis') else 'de Fish (final)'} lista: {len(durs)} tomas, "
+        f"{sum(durs.values()):.1f} s a {VELOCIDAD}x. Siguiente: short.py montar {a.id} {a.s}")
 
 
 # ------------------------------------------------------------------ montaje
@@ -467,6 +523,25 @@ def reglas_papel(a, s, g, c):
         s("S7", "OK", "pensado en bucle: la última frase enlaza con la primera")
     m = (g.get("musica") or {}).get("src", "")
     s("S8", "OK" if m and os.path.exists(os.path.join(AUDIO, m)) else "FALLO", f"música: {m or 'ninguna'}" + ("" if m and os.path.exists(os.path.join(AUDIO, m)) else " (solo del maestro de audio: audio/musica/<uso>/...)"))
+    # imagen: mayoría de clips y piezas animadas; fotos y documentos, de paso (Antonio, 10-11-2026)
+    pm = (m1(c) or {}).get("planos", [])
+    mov = quieto = 0.0
+    for b in beats:
+        bd = float(b["dur"]) if not b.get("voz") and b.get("dur") else len(palabras(b.get("voz", ""))) / 2.9 + PAUSA
+        ps = b.get("planos", [])
+        fijo = sum(float(p.get("dur", 0)) for p in ps)
+        libres = [p for p in ps if "dur" not in p]
+        for p in ps:
+            d_ = float(p["dur"]) if "dur" in p else max(bd - fijo, 0) / max(len(libres), 1)
+            t_ = p.get("tipo") or (pm[int(p["de"]) - 1].get("tipo") if "de" in p and 0 < int(p["de"]) <= len(pm) else "")
+            if t_ in ("V", "A", "N"):
+                mov += d_
+            else:
+                quieto += d_
+    if mov + quieto:
+        cuota = mov / (mov + quieto)
+        s("S2", "OK" if cuota >= MOVIMIENTO_MIN else "FALLO", f"{cuota:.0%} del tiempo en clips o piezas animadas (mínimo {MOVIMIENTO_MIN:.0%}); "
+          f"fotos y documentos, {quieto:.1f} s: un Short no es una foto con texto y voz")
     titulo = g.get("titulo", "")
     s("S5", "OK" if titulo and len(titulo) <= 60 else "AVISO", f"título: «{titulo}» ({len(titulo)} caracteres)")
 
@@ -480,6 +555,14 @@ def reglas_montaje(a, s, c, ds, g):
     largos = [p for p in pl[:-1] if p["dur"] > (PLANO_MAX_EXPLIC if p.get("explicativa") else PLANO_MAX)]
     cpm = len(pl) / max(d["dur"], 1) * 60
     s("S2", "FALLO" if largos else "OK", f"{len(pl)} planos ({cpm:.0f} por minuto)" + "".join(f"\n    - {p['ini']:.1f} s · {p['dur']:.1f} s · {p.get('clip') or p.get('key') or p.get('img')}" for p in largos))
+    # imagen: mayoría de clips y piezas animadas; fotos y documentos, de paso (Antonio, 10-11-2026)
+    mov = sum(p["dur"] for p in pl if p.get("tipo") in ("V", "A"))
+    quietos = [p for p in pl if p.get("tipo") not in ("V", "A")]
+    cuota = mov / max(sum(p["dur"] for p in pl), 0.1)
+    s("S2", "OK" if cuota >= MOVIMIENTO_MIN else "FALLO", f"{cuota:.0%} del tiempo en clips o piezas animadas (mínimo {MOVIMIENTO_MIN:.0%})")
+    largas = [p for p in quietos if p["dur"] > FOTO_MAX + 0.05]
+    if largas:
+        s("S2", "FALLO", f"fotos o documentos de más de {FOTO_MAX} s: " + "; ".join(f"{p['ini']:.1f} s · {p['dur']:.1f} s · {p.get('img') or p.get('key')}" for p in largas))
     # un clip que se acaba antes que su plano se congela en el último fotograma
     cortos = []
     for p in pl:
@@ -757,6 +840,9 @@ def cmd_informe(a):
             continue
         g = json.load(open(gp, encoding="utf-8"))
         v = os.path.join(ds, f"{a.id}_{s_}.mp4")
+        vj = os.path.join(ds, "voz.json")
+        vd = json.load(open(vj)) if os.path.exists(vj) else None
+        gratis = None if vd is None else vd.get("gratis", vd.get("modelo") != "s2.1-pro")
         ctl = os.path.join(ds, "control_video.md") if os.path.exists(os.path.join(ds, "control_video.md")) else os.path.join(ds, "control_papel.md")
         filas = re.findall(r"^- \S+ \*\*(S\d) ([^*]+)\*\* (OK|AVISO|FALLO): (.+)$", open(ctl, encoding="utf-8").read(), re.M) if os.path.exists(ctl) else []
         pasa = sorted({f"{r} {n}" for r, n, est, _ in filas} - {f"{r} {n}" for r, n, est, _ in filas if est == "FALLO"})
@@ -764,13 +850,14 @@ def cmd_informe(a):
         mejora = [f"{r}: {t[:110]}" for r, n, est, t in filas if est == "AVISO"]
         lin += [f"## {s_} · {g.get('angulo', '')} · {ffprobe_dur(v):.1f} s" if os.path.exists(v) else f"## {s_} · {g.get('angulo', '')} · sin vídeo",
                 f"**Vídeo:** {os.path.basename(v) if os.path.exists(v) else '—'} · ronda {e.get(s_, {}).get('rondas', 0)} de {MAX_RONDAS}",
+                "**Voz:** " + ("gratuita (borrador): con tu ok, se pasa a Fish" if gratis else "Fish (final)" if gratis is False else "—"),
                 f"**Título:** {g.get('titulo', '')}", f"**Pregunta para comentar:** {g.get('pregunta', '').replace('|', ' ').replace('*', '')}",
                 f"**Pasa:** {', '.join(pasa) or '—'}"]
         lin += ["**Falla:**"] + [f"- {x}" for x in falla] if falla else ["**Falla:** nada"]
         if mejora:
             lin += ["**Se puede mejorar:**"] + [f"- {x}" for x in mejora[:5]]
         lin.append("")
-    lin += ["## Decisión", "¿Cuáles se publican, y en qué fechas? (propuesta en references/publicar.md: el día después del largo y luego cada dos días, 18:00 de Madrid)"]
+    lin += ["## Decisión", "¿Cuáles das por buenos? Esos pasan a la voz de Fish y se publican; ¿en qué fechas? (propuesta en references/publicar.md: el día después del largo y luego cada dos días, 18:00 de Madrid)"]
     out = os.path.join(c, "shorts", "informe.md")
     open(out, "w", encoding="utf-8").write("\n".join(lin) + "\n")
     print("\n".join(lin))
@@ -785,7 +872,7 @@ def main():
     sub = ap.add_subparsers(dest="cmd", required=True)
     x = sub.add_parser("inventario"); x.add_argument("id"); x.set_defaults(fn=cmd_inventario)
     x = sub.add_parser("voz"); x.add_argument("id"); x.add_argument("s"); x.add_argument("--modelo", choices=VOZ_MODELOS); x.add_argument("--presupuesto", action="store_true")
-    x.add_argument("--rehacer", default=""); x.add_argument("--autoriza"); x.set_defaults(fn=cmd_voz)
+    x.add_argument("--rehacer", default=""); x.add_argument("--autoriza"); x.add_argument("--ok"); x.set_defaults(fn=cmd_voz)
     x = sub.add_parser("montar"); x.add_argument("id"); x.add_argument("s"); x.set_defaults(fn=cmd_montar)
     x = sub.add_parser("render"); x.add_argument("id"); x.add_argument("s"); x.add_argument("--stills", action="store_true"); x.set_defaults(fn=cmd_render)
     x = sub.add_parser("control"); x.add_argument("id"); x.add_argument("s"); x.add_argument("--papel", action="store_true"); x.set_defaults(fn=cmd_control)
